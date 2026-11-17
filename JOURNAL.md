@@ -129,3 +129,6 @@ J'ai cherché des mots-clés (Senior, Junior, Lead, Data Scientist...) dans les 
 
 ### Compétence clé retenue de cette étape
 Savoir documenter les limites des données (sparse, imprécises, formulées différemment) est aussi important que produire des chiffres — ça montre une analyse rigoureuse plutôt qu'une conclusion forcée.
+
+### Bug découvert : écrasement silencieux des données lors du dédoublonnage
+En élargissant la liste de mots-clés, j'ai remarqué que le nombre d'offres mentionnant "AI" avait baissé (30 → 7) alors qu'on avait ajouté des données, ce qui n'avait pas de sens. Cause : dans `collecte_offres.py`, quand une même offre (même ID) ressortait via plusieurs mots-clés différents, Jooble renvoyait parfois un extrait de texte différent, et mon code écrasait systématiquement l'ancienne version avec la nouvelle (`offres_uniques[id_offre] = offre`). Correction : ne stocker l'offre que si son ID n'a jamais été vu (`if id_offre not in offres_uniques`), pour garder une version stable et éviter la perte silencieuse de données. Résultat : le nombre d'offres mentionnant "AI" est remonté à 24/86.
