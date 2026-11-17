@@ -75,3 +75,14 @@ de Python (`json.dump(..., ensure_ascii=False, indent=2)`) :
 ### Prochaine étape
 Stocker ces données de façon plus robuste (base de données plutôt que fichier JSON),
 avant de passer au nettoyage avec pandas (étape 2).
+
+## Étape 1 (suite) — Stockage dans PostgreSQL
+
+- Création de la base `jobradar` et de la table `offres` dans pgAdmin
+  (colonnes : id, titre, entreprise, lieu, lien, date_collecte)
+- `id` en clé primaire → empêche les doublons directement au niveau de la base
+- Script `stocker_offres.py` : lit offres_brutes.json et insère chaque offre
+  via psycopg2, avec ON CONFLICT (id) DO NOTHING pour ignorer les doublons
+- Pipeline en 2 scripts séparés (collecte puis stockage), pas encore automatisé
+- Notion apprise : séparer collecte et stockage est une bonne pratique en
+  data engineering ; prochaine étape = automatiser l'enchaînement (GitHub Actions)
