@@ -1,0 +1,36 @@
+name: Collecte quotidienne des offres
+
+on:
+  schedule:
+    - cron: "0 7 * * *"   # tous les jours à 7h00 UTC
+  workflow_dispatch:        # permet aussi de le lancer manuellement depuis GitHub
+
+jobs:
+  collecte-et-stockage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code du dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      - name: Lancer la collecte des offres
+        run: python src/collecte_offres.py
+        env:
+          JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
+
+      - name: Stocker les offres dans Supabase
+        run: python src/stocker_offres.py
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
