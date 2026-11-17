@@ -86,3 +86,20 @@ avant de passer au nettoyage avec pandas (étape 2).
 - Pipeline en 2 scripts séparés (collecte puis stockage), pas encore automatisé
 - Notion apprise : séparer collecte et stockage est une bonne pratique en
   data engineering ; prochaine étape = automatiser l'enchaînement (GitHub Actions)
+
+  ## Étape 1 (suite) — Migration cloud et automatisation
+
+- Migration de la base PostgreSQL locale vers Supabase (hébergement cloud gratuit,
+  sans carte bancaire) : nécessaire car GitHub Actions ne peut pas accéder à une
+  base tournant sur mon PC local (localhost)
+- Connexion via le "Session pooler" de Supabase (IPv4) plutôt que la connexion
+  directe (IPv6) — évite un add-on payant
+- Secrets (clé Jooble + identifiants base de données) stockés dans GitHub Secrets,
+  jamais en clair dans le code ni dans le dépôt
+- Création du workflow GitHub Actions (.github/workflows/collecte_quotidienne.yml) :
+  s'exécute tous les jours à 7h UTC (cron), + déclenchement manuel possible
+  (workflow_dispatch)
+- Premier run manuel réussi : collecte + stockage en 34 secondes, 100% automatisé,
+  sans intervention de mon PC
+- Notion apprise : CI/CD basique — une machine éphémère dans le cloud exécute du
+  code selon un calendrier, sans jamais toucher à l'infrastructure personnelle
