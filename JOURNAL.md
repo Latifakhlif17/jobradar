@@ -103,3 +103,29 @@ avant de passer au nettoyage avec pandas (étape 2).
   sans intervention de mon PC
 - Notion apprise : CI/CD basique — une machine éphémère dans le cloud exécute du
   code selon un calendrier, sans jamais toucher à l'infrastructure personnelle
+
+  ## Étape 2 — Nettoyage des données et premières analyses avec pandas
+
+### Chargement des données
+J'ai écrit `src/analyse.py`, qui se connecte à Supabase (même logique de connexion que `stocker_offres.py`) et charge toute la table `offres` dans un DataFrame pandas avec `pd.read_sql()`. Ça donne un tableau de 57 lignes et 9 colonnes manipulable directement en Python, plutôt que de boucler ligne par ligne comme avec psycopg2 seul.
+
+### Nettoyage de type_contrat
+J'ai découvert que les valeurs manquantes étaient représentées de deux façons différentes dans mes données : `NaN` (vraiment aucune info, vient des offres jamais enrichies) et `''` chaîne vide (vient de Jooble qui ne fournit pas toujours cette info). J'ai uniformisé les deux avec `.replace("", pd.NA)` puis `.fillna("Non précisé")`, pour avoir une seule catégorie claire. Résultat : 48 "Full-time", 8 "Non précisé", 1 "Temporary".
+
+### Limite découverte : le champ salaire
+Seulement 3 offres sur 57 ont un vrai salaire renseigné (le reste est vide ou absent). Pas assez de données pour faire une analyse salaire-par-ville fiable. J'ai documenté cette limite plutôt que de forcer une conclusion non fiable sur 3 valeurs.
+
+### Nettoyage HTML dans les descriptions
+Les descriptions (le champ "snippet" de Jooble) contenaient des balises HTML (`<b>`, `&nbsp;`) mélangées au texte. J'ai écrit une fonction `nettoyer_html()` avec le module `re` (expressions régulières) pour les enlever, en gardant le texte brut original dans une colonne séparée (`description_propre`) — bonne pratique : ne jamais écraser la donnée source.
+
+### Analyse des compétences demandées
+J'ai cherché des mots-clés techniques (Python, SQL, Power BI...) dans les descriptions avec `.str.contains()`. Piège rencontré : chercher "AI" sans limite de mot (`\b`) donnait des faux positifs (le mot "detail" contient "ai"). Corrigé avec une regex `\bAI\b`. Limite découverte : le "snippet" Jooble est trop court pour contenir la plupart des outils techniques précis — seul "AI" ressort beaucoup, car c'est un des mots-clés de recherche utilisés dès la collecte.
+
+### Limite découverte : le champ lieu
+Le champ `lieu` vaut "France" pour les 57 offres, sans ville précise — Jooble ne renvoie pas toujours une localisation détaillée. Les vraies villes (ex: "Grenoble", "Dunkirk") apparaissent parfois dans le texte libre de la description, mais pas dans le champ structuré. Analyse géographique abandonnée faute de données exploitables.
+
+### Analyse des titres de poste
+J'ai cherché des mots-clés (Senior, Junior, Lead, Data Scientist...) dans les titres. Résultat : 11 "Senior", 0 "Junior", 4 "Lead", 9 "Manager". Mais "Data Scientist"/"Data Engineer"/"Data Analyst" ressortent très peu (2, 0, 0) car les titres réels varient beaucoup dans leur formulation (ex: "Senior Quantitative Analyst" est un métier data mais ne contient aucun de ces mots exacts). Leçon : la recherche par mot-clé exact a des limites pour capturer la diversité du langage naturel.
+
+### Compétence clé retenue de cette étape
+Savoir documenter les limites des données (sparse, imprécises, formulées différemment) est aussi important que produire des chiffres — ça montre une analyse rigoureuse plutôt qu'une conclusion forcée.
