@@ -16,20 +16,23 @@ def connexion_bdd():
     )
 
 def inserer_offres(chemin_json):
-    """Lit le fichier JSON et insère chaque offre dans la table 'offres'."""
+    """Lit le fichier JSON et insère (ou met à jour) chaque offre dans la table 'offres'."""
     with open(chemin_json, "r", encoding="utf-8") as f:
         offres = json.load(f)
 
     conn = connexion_bdd()
     cur = conn.cursor()  # le "curseur" : l'objet qui exécute les requêtes SQL
 
-    nb_inserees = 0
+    nb_traitees = 0
     for offre in offres:
         cur.execute(
             """
-            INSERT INTO offres (id, titre, entreprise, lieu, lien)
-            VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (id) DO NOTHING
+            INSERT INTO offres (id, titre, entreprise, lieu, lien, description, salaire, type_contrat)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (id) DO UPDATE SET
+                description = EXCLUDED.description,
+                salaire = EXCLUDED.salaire,
+                type_contrat = EXCLUDED.type_contrat
             """,
             (
                 offre.get("id"),
@@ -37,16 +40,18 @@ def inserer_offres(chemin_json):
                 offre.get("company"),
                 offre.get("location"),
                 offre.get("link"),
+                offre.get("snippet"),
+                offre.get("salary"),
+                offre.get("type"),
             )
         )
-        if cur.rowcount > 0:
-            nb_inserees += 1
+        nb_traitees += 1
 
     conn.commit()  # valide définitivement les changements dans la base
     cur.close()
     conn.close()
 
-    print(f"{nb_inserees} nouvelles offres insérées dans la base.")
+    print(f"{nb_traitees} offres traitées (insérées ou mises à jour).")
 
 if __name__ == "__main__":
     inserer_offres("offres_brutes.json")
