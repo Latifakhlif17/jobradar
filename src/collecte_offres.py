@@ -1,12 +1,10 @@
 import os
 import requests
+import json
 from dotenv import load_dotenv
 
-# Charge les variables depuis le fichier .env (notamment JOOBLE_API_KEY)
 load_dotenv()
 API_KEY = os.getenv("JOOBLE_API_KEY")
-
-# L'URL de l'API Jooble contient ta clé directement dans le chemin
 URL = f"https://jooble.org/api/{API_KEY}"
 
 def rechercher_offres(mots_cles, lieu="France", page=1):
@@ -16,14 +14,10 @@ def rechercher_offres(mots_cles, lieu="France", page=1):
         "location": lieu,
         "page": page
     }
-
     reponse = requests.post(URL, json=corps_requete)
-    reponse.raise_for_status()  # lève une erreur si la requête a échoué
-
+    reponse.raise_for_status()
     donnees = reponse.json()
     return donnees
-
-import json
 
 if __name__ == "__main__":
     mots_cles_a_tester = [
@@ -38,7 +32,15 @@ if __name__ == "__main__":
         "analyste de données",
         "ingénieur data",
         "scientifique des données",
-        "analyste business intelligence"
+        "analyste business intelligence",
+        "Python data",
+        "SQL data",
+        "Power BI",
+        "Tableau software",
+        "AWS data",
+        "Azure data",
+        "Spark data",
+        "data analyst alternance"
     ]
 
     offres_uniques = {}
@@ -49,11 +51,11 @@ if __name__ == "__main__":
             offres = resultats.get("jobs", [])
             print(f"Mots-clés : '{mots_cles}' (page {page}) → {len(offres)} offres reçues")
             if not offres:
-                break
+                break  # si une page est vide, inutile de demander la suivante
             for offre in offres:
                 id_offre = offre.get("id")
                 if id_offre not in offres_uniques:
-                 offres_uniques[id_offre] = offre
+                    offres_uniques[id_offre] = offre
 
     print(f"\nTotal après dédoublonnage : {len(offres_uniques)} offres uniques")
 
